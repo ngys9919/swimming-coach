@@ -1,0 +1,30 @@
+{{#extends 'base'}}
+
+{{#block "title"}}All Customers{{/block}}
+
+{{#block "content"}}
+<h1>All Customers</h1>
+<table class="table">
+    <thead>
+        <tr>
+            <th>First Name</th>
+            <th>Last Name</th>
+            <th>Rating</th>
+            <th>Company ID</th>
+        </tr>
+    </thead>
+    <tbody>
+        {{#each customerList}}
+        <tr>
+            <td>{{first_name}}</td>
+            <td>{{last_name}}</td>
+            <td>{{rating}}</td>
+            <td>{{company_id}}</td>
+        </tr>
+        {{/each}}
+    </tbody>
+</table>
+
+{{/block}}
+
+{{/extends}}
