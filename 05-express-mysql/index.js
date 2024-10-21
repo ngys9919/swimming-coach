@@ -5,6 +5,13 @@ const wax = require('wax-on');
 wax.on(hbs.handlebars); // apply wax to handlebars
 wax.setLayoutPath("./views/layouts");
 
+// require in handlebars and their helpers
+const helpers = require('handlebars-helpers');
+// tell handlebars-helpers where to find handlebars
+helpers({
+    'handlebars': hbs.handlebars
+})
+
 require('dotenv').config();
 
 // use destructuring syntax to only require in the createConnection function
@@ -77,6 +84,41 @@ async function main() {
 
         // redirect tells the client (often time the broswer) to go a different URL
         res.redirect('/customers');
+    });
+
+    app.get('/customers/:customer_id/edit', async function(req,res){
+        // fetch the customer we are editing
+        const customerId = req.params.customer_id;
+        // in prepared statements, we give the instructions to MySQL in 2 pass
+        // 1. the prepared statement - so SQL knows what we are executing and won't execute anything else
+        // 2. send what is the data for each ?
+        // Do you ESCAPE your MySQL statements
+        const [customers] = await connection.execute(`SELECT * FROM Customers WHERE customer_id = ?`, [customerId]);
+        
+        // MySQL2 will always return an array of results even if there is only one result
+        const customer = customers[0]; // retrieve the customer that we want to edit which will be at index 0
+
+        // get all the customers to populate the drop down form
+        const [companies] = await connection.execute(`SELECT * FROM Companies`);
+
+        // send the customer to the hbs file so the user can see details prefilled in the form
+        res.render('customers/edit', {
+            customer, // => same as 'customer': customer
+            companies // => same as 'companies' : companies
+        })
+    })
+
+    app.post('/customers/:customer_id/edit', async function(req, res){
+        const { company_id, first_name, last_name, rating } = req.body;
+
+        const sql = `UPDATE Customers SET first_name=?, last_name=?, rating=?, company_id=?
+                        WHERE customer_id = ?;`
+
+        const bindings =[first_name, last_name, rating, company_id, req.params.customer_id ];
+
+        await connection.execute(sql, bindings);
+
+        res.redirect("/customers");
     })
 }
 

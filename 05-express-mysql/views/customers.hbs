@@ -11,6 +11,7 @@
             <th>Last Name</th>
             <th>Rating</th>
             <th>Company Name</th>
+            <th>Actions</th>
         </tr>
     </thead>
     <tbody>
@@ -20,6 +21,9 @@
             <td>{{last_name}}</td>
             <td>{{rating}}</td>
             <td>{{name}}</td>
+            <td>
+                <a href="/customers/{{customer_id}}/edit">Edit</a>
+            </td>
         </tr>
         {{/each}}
     </tbody>
