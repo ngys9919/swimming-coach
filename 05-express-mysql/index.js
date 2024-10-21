@@ -71,9 +71,9 @@ async function main() {
             VALUES (?, ?, ?, ?);`
 
         const bindings = [
-            req.body.first_name, 
-            req.body.last_name, 
-            req.body.rating, 
+            req.body.first_name,
+            req.body.last_name,
+            req.body.rating,
             req.body.company_id
 
         ]
@@ -86,7 +86,7 @@ async function main() {
         res.redirect('/customers');
     });
 
-    app.get('/customers/:customer_id/edit', async function(req,res){
+    app.get('/customers/:customer_id/edit', async function (req, res) {
         // fetch the customer we are editing
         const customerId = req.params.customer_id;
         // in prepared statements, we give the instructions to MySQL in 2 pass
@@ -94,7 +94,7 @@ async function main() {
         // 2. send what is the data for each ?
         // Do you ESCAPE your MySQL statements
         const [customers] = await connection.execute(`SELECT * FROM Customers WHERE customer_id = ?`, [customerId]);
-        
+
         // MySQL2 will always return an array of results even if there is only one result
         const customer = customers[0]; // retrieve the customer that we want to edit which will be at index 0
 
@@ -108,17 +108,43 @@ async function main() {
         })
     })
 
-    app.post('/customers/:customer_id/edit', async function(req, res){
-        const { company_id, first_name, last_name, rating } = req.body;
+    app.post('/customers/:customer_id/edit', async function (req, res) {
+        try {
+            const { company_id, first_name, last_name, rating } = req.body;
 
-        const sql = `UPDATE Customers SET first_name=?, last_name=?, rating=?, company_id=?
-                        WHERE customer_id = ?;`
+            if (!first_name || !last_name || !company_id || !rating) {
+                throw new Exception("Invalid values");
+            }
 
-        const bindings =[first_name, last_name, rating, company_id, req.params.customer_id ];
+            const sql = `UPDATE Customers SET first_name=?, last_name=?, rating=?, company_id=?
+                            WHERE customer_id = ?;`
 
-        await connection.execute(sql, bindings);
+            const bindings = [first_name, last_name, rating, company_id, req.params.customer_id];
 
-        res.redirect("/customers");
+            await connection.execute(sql, bindings);
+
+            res.redirect("/customers");
+        } catch (e) {
+            res.status(400).send("Error " + e);
+        }
+    })
+
+    app.get('/customers/:customer_id/delete', async function(req,res){
+        // display a confirmation form 
+        const [customers] = await connection.execute(
+            "SELECT * FROM Customers WHERE customer_id =?", [req.params.customer_id]
+        );
+        const customer = customers[0];
+
+        res.render('customers/delete', {
+            customer
+        })
+
+    })
+
+    app.post('/customers/:customer_id/delete', async function(req, res){
+        await connection.execute(`DELETE FROM Customers WHERE customer_id = ?`, [req.params.customer_id]);
+        res.redirect('/customers');
     })
 }
 
